@@ -79,6 +79,11 @@ $_SERVER['argc'] = $argc;
 
 chdir($remote_dir);
 
+if (file_exists("$remote_dir/vendor/autoload.php")) {
+    /** @noinspection PhpIncludeInspection */
+    require "$remote_dir/vendor/autoload.php";
+}
+
 ob_start(function ($out) use ($remote_dir, $local_dir) {
     return str_replace($remote_dir, $local_dir, $out);
 });
