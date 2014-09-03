@@ -7,8 +7,7 @@ $local_dir = __DIR__;
 
 $fn = __DIR__ . DIRECTORY_SEPARATOR . basename(__FILE__, '.php') . '.local.php';
 
-if (file_exists($fn))
-{
+if (file_exists($fn)) {
     /** @noinspection PhpIncludeInspection */
     require $fn;
 }
