@@ -1,7 +1,7 @@
 <?php
 $remote_host = '192.0.2.123';
 $remote_dir = '/home/your/work/project';
-$local_dir = dirname(__DIR__);
+$local_dir = __DIR__;
 
 ///
 
