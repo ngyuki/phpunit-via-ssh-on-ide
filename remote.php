@@ -3,6 +3,12 @@ $remote_host = '192.0.2.123';
 $remote_dir = '/home/your/work/project';
 $local_dir = __DIR__;
 
+/*
+ * IDE [Run -> Edit Configurations]
+ *   - Interpreter options: -d include_path=. -d auto_prepend_file=remote.php
+ *   - Custom working directory: {project_root}
+ */
+
 ///
 
 $fn = __DIR__ . DIRECTORY_SEPARATOR . basename(__FILE__, '.php') . '.local.php';
@@ -84,6 +90,7 @@ if (file_exists("$remote_dir/vendor/autoload.php")) {
     require "$remote_dir/vendor/autoload.php";
 }
 
+ob_implicit_flush(true);
 ob_start(function ($out) use ($remote_dir, $local_dir) {
     return str_replace($remote_dir, $local_dir, $out);
-});
+}, 2);
