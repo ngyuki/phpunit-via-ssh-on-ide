@@ -1,15 +1,14 @@
 <?php
+$remote_user = 'your';
 $remote_host = '192.0.2.123';
 $remote_dir = '/home/your/work/project';
-$local_dir = __DIR__;
+$local_dir = dirname(__DIR__);
 
 /*
- * IDE [Run -> Edit Configurations]
- *   - Interpreter options: -d include_path=. -d auto_prepend_file=remote.php
- *   - Custom working directory: {project_root}
+ * IDE [Settings -> PHP -> PHPUnit]
+ *  - Use custom loader: on
+ *  - Path to script: /path/to/project/tests/misc/remote-phpstorm.php
  */
-
-///
 
 $fn = __DIR__ . DIRECTORY_SEPARATOR . basename(__FILE__, '.php') . '.local.php';
 
@@ -43,36 +42,47 @@ $argv = array_map(function ($arg) use ($prefix, $win) {
 }, $argv);
 
 $params = array(
+    'argv' => $argv,
     'remote_dir' => $remote_dir,
     'local_dir' => $local_dir,
-    'argv' => $argv,
 );
 
-$file = ltrim(substr(file_get_contents(__FILE__), __COMPILER_HALT_OFFSET__));
+$file = file_get_contents(__FILE__, null, null, __COMPILER_HALT_OFFSET__);
+$file = strchr($file, "\n");
+$file = ltrim($file);
 $file = str_replace('__IDE_PHPUNIT_PARAMS__', var_export($params, true), $file);
+
 $file .= '?' . '>';
 $file .= file_get_contents($_SERVER['SCRIPT_FILENAME']);
 
-$cmd = sprintf('plink %s -batch env IDE_DEBUG=%d bash',
-    escapeshellarg($remote_host),
-    isset($_SERVER['XDEBUG_CONFIG'])
+if (isset($_SERVER['XDEBUG_CONFIG'])) {
+    $cmd = sprintf('plink %s -l %s -batch env %s php',
+        escapeshellarg($remote_host),
+        escapeshellarg($remote_user),
+        'XDEBUG_CONFIG="remote_host=${SSH_CLIENT%% *} PHP_IDE_CONFIG="serverName=${HOSTNAME%%.*}"'
+    );
+} else {
+    $cmd = sprintf('plink %s -l %s -batch php',
+        escapeshellarg($remote_host),
+        escapeshellarg($remote_user)
+    );
+}
+
+$desc = array(
+    0 => array('pipe', 'r'),
+    1 => STDOUT,
+    2 => STDERR,
 );
 
-$pp = popen($cmd, "wb");
-fwrite($pp, $file);
-stream_copy_to_stream($pp, STDOUT);
-pclose($pp);
-exit;
+$proc = proc_open($cmd, $desc, $pipes);
+fwrite($pipes[0], $file);
+fclose($pipes[0]);
+exit(proc_close($proc));
+
 __halt_compiler();
-#!/bin/bash
-
-if [ "$IDE_DEBUG" -ne 0 ]; then
-    export XDEBUG_CONFIG="remote_host=$(echo $SSH_CLIENT | awk '{print $1}')"
-    export PHP_IDE_CONFIG="serverName=$(hostname -s)"
-fi
-
-exec php
 <?php
+/** @noinspection PhpUnreachableStatementInspection */
+/** @noinspection PhpUndefinedConstantInspection */
 $params = __IDE_PHPUNIT_PARAMS__;
 
 $remote_dir = $params['remote_dir'];
