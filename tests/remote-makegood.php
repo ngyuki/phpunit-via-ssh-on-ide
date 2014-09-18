@@ -36,21 +36,21 @@ $junit = null;
 
 $argv = $_SERVER['argv'];
 $args = array_reduce($argv, function ($r, $arg) use ($prefix, $win, &$junit) {
-	if ($junit === null) {
-		if (strncmp('--log-junit=', $arg, strlen('--log-junit=')) === 0) {
-			$junit = substr($arg, strlen('--log-junit='));
-		}
-	}
-	if ($junit !== null) {
-		if (file_exists($arg)) {
-			$mat = $arg;
-			if ($win) {
-				$mat = str_replace(DIRECTORY_SEPARATOR, '/', strtolower($mat));
-			}
-			if (strncmp($mat, $prefix, strlen($prefix)) === 0) {
-				$arg = './' . substr($arg, strlen($prefix));
-				if ($win) {
-					$arg = str_replace(DIRECTORY_SEPARATOR, '/', $arg);
+    if ($junit === null) {
+        if (strncmp('--log-junit=', $arg, strlen('--log-junit=')) === 0) {
+            $junit = substr($arg, strlen('--log-junit='));
+        }
+    }
+    if ($junit !== null) {
+        if (file_exists($arg)) {
+            $mat = $arg;
+            if ($win) {
+                $mat = str_replace(DIRECTORY_SEPARATOR, '/', strtolower($mat));
+            }
+            if (strncmp($mat, $prefix, strlen($prefix)) === 0) {
+                $arg = './' . substr($arg, strlen($prefix));
+                if ($win) {
+                    $arg = str_replace(DIRECTORY_SEPARATOR, '/', $arg);
                 }
             }
         }
@@ -70,7 +70,8 @@ $file = strchr($file, "\n");
 $file = ltrim($file);
 $file = str_replace('__IDE_PHPUNIT_PARAMS__', var_export($params, true), $file);
 
-$cmd = sprintf('plink %s -l %s -batch php 2> %s',
+$cmd = sprintf(
+    'plink %s -l %s -batch php 2> %s',
     escapeshellarg($remote_host),
     escapeshellarg($remote_user),
     escapeshellarg($junit)
@@ -105,44 +106,40 @@ $tmp = tempnam(sys_get_temp_dir(), "makegood-junit-");
 unlink($tmp);
 posix_mkfifo($tmp, 0600);
 
-try
-{
-	$args = array_reduce($args, function ($r, $arg) use ($tmp) {
-		if (strncmp('--log-junit=', $arg, strlen('--log-junit=')) === 0) {
-			$arg = "--log-junit=$tmp";
-		}
-		$r[] = $arg;
-		return $r;
-	}, []);
+try {
+    $args = array_reduce($args, function ($r, $arg) use ($tmp) {
+        if (strncmp('--log-junit=', $arg, strlen('--log-junit=')) === 0) {
+            $arg = "--log-junit=$tmp";
+        }
+        $r[] = $arg;
+        return $r;
+    }, []);
 
     $cmd = array_merge(['vendor/bin/testrunner'], array_map(function ($arg) {
-		return escapeshellarg($arg);
-	}, $args));
+        return escapeshellarg($arg);
+    }, $args));
 
     $cmd = implode(" ", $cmd);
 
     $desc = array(
-		0 => array('file', '/dev/null', 'r'),
-		1 => array('file', 'php://stdout', 'w'),
-		2 => array('file', 'php://stdout', 'w'),
-	);
+        0 => array('file', '/dev/null', 'r'),
+        1 => array('file', 'php://stdout', 'w'),
+        2 => array('file', 'php://stdout', 'w'),
+    );
 
     $proc = proc_open($cmd, $desc, $pipes);
 
     $fifo = fopen($tmp, 'r');
-	$stderr = fopen('php://stderr', 'w');
-	
-	while (strlen($data = fread($fifo, 1024)) !== 0)
-	{
+    $stderr = fopen('php://stderr', 'w');
+
+    while (strlen($data = fread($fifo, 1024)) !== 0) {
         $data = str_replace($remote_dir, $local_dir, $data);
-		fwrite($stderr, $data);
-	}
-	
-	$exit = proc_close($proc);
-}
-finally
-{
-	unlink($tmp);
+        fwrite($stderr, $data);
+    }
+
+    $exit = proc_close($proc);
+} finally {
+    unlink($tmp);
 }
 
 exit($exit);

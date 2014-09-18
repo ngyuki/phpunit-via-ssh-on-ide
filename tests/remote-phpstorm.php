@@ -56,13 +56,15 @@ $file .= '?' . '>';
 $file .= file_get_contents($_SERVER['SCRIPT_FILENAME']);
 
 if (isset($_SERVER['XDEBUG_CONFIG'])) {
-    $cmd = sprintf('plink %s -l %s -batch env %s php',
+    $cmd = sprintf(
+        'plink %s -l %s -batch env %s php',
         escapeshellarg($remote_host),
         escapeshellarg($remote_user),
         'XDEBUG_CONFIG="remote_host=${SSH_CLIENT%% *} PHP_IDE_CONFIG="serverName=${HOSTNAME%%.*}"'
     );
 } else {
-    $cmd = sprintf('plink %s -l %s -batch php',
+    $cmd = sprintf(
+        'plink %s -l %s -batch php',
         escapeshellarg($remote_host),
         escapeshellarg($remote_user)
     );
