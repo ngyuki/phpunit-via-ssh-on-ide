@@ -70,14 +70,7 @@ $file = strchr($file, "\n");
 $file = ltrim($file);
 $file = str_replace('__IDE_PHPUNIT_PARAMS__', var_export($params, true), $file);
 
-$cmd = sprintf(
-    'plink %s -l %s -batch php 2> %s',
-    escapeshellarg($remote_host),
-    escapeshellarg($remote_user),
-    escapeshellarg($junit)
-);
-
-$cmd = sprintf('plink %s -batch php', escapeshellarg($remote_host));
+$cmd = sprintf('plink %s -l %s -batch php', escapeshellarg($remote_host), escapeshellarg($remote_user));
 
 $desc = array(
     0 => array('pipe', 'r'),
